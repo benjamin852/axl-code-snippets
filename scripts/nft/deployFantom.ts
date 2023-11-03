@@ -1,8 +1,5 @@
 // import { Wallet, getDefaultProvider } from "ethers"
 import { ethers } from 'hardhat';
-import { deployContract } from "@axelar-network/axelar-local-dev";
-import InterchainNFT from "../artifacts/contracts/InterchainNFT.sol/InterchainNFT.json";
-import chains from "../chains.json";
 
 async function main() {
 

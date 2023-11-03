@@ -11,8 +11,6 @@ contract InterchainNFT is AxelarExecutable {
     IAxelarGasService public immutable gasService;
     ERC721 nft;
 
-    event BensEvent(bool status, string message, bytes data);
-
     constructor(
         address _gateway,
         address _gasService,
@@ -58,7 +56,5 @@ contract InterchainNFT is AxelarExecutable {
         //safeMint();
         // string memory mintCall = abi.decode(_payload, (string));
         (bool success, bytes memory data) = address(nft).call(_payload);
-
-        emit BensEvent(success, "Bens message on the event", data);
     }
 }
