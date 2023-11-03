@@ -7,9 +7,13 @@ import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contract
 import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
 import {IAxelarGasService} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol";
 
-contract RockPaperScissors {
+//interchain bet --> more assets, extra logic to cheaper chains, increase pool of players
+//option 2 all logic on chain A. only send winner to chain B and payout winner there
+contract RockPaperScissors is AxelarExecutable {
     address public player1;
     address public player2;
+
+    IAxelarGasService public immutable gasService;
 
     enum Move {
         Rock,
@@ -28,9 +32,15 @@ contract RockPaperScissors {
     bool public gameCompleted;
     address public winner;
 
-    uint256 wager;
+    uint256 public wager;
 
-    constructor(uint256 _wager) {
+    //BUG: Assumes address with playerOne deploys on both chains
+    constructor(
+        address _gateway,
+        address _gasService,
+        uint256 _wager
+    ) AxelarExecutable(_gateway) {
+        gasService = IAxelarGasService(_gasService);
         player1 = msg.sender;
         wager = _wager;
     }
@@ -40,14 +50,21 @@ contract RockPaperScissors {
         player2 = msg.sender;
     }
 
-    function makeChoice(Move _move) public {
+    function makeChoice(
+        string memory _destChain,
+        string memory _destContractAddr,
+        string memory _symbol,
+        uint256 _amount,
+        Move _move
+    ) public payable {
         require(
             msg.sender == player1 || msg.sender == player2,
             "You are not a participant."
         );
         require(!gameCompleted, "Game is already completed.");
+        require(wager == _amount, "invalid amount");
 
-        Choice storage currentChoice = (msg.sender == player1)
+        Choice memory currentChoice = (msg.sender == player1)
             ? choice1
             : choice2;
 
@@ -56,19 +73,23 @@ contract RockPaperScissors {
             "Invalid choice."
         );
 
-        currentChoice.player = msg.sender;
-        currentChoice.move = _move;
+        // currentChoice.player = msg.sender;
+        // currentChoice.move = _move;
 
-        if (choice1.player != address(0) && choice2.player != address(0)) {
-            determineWinner();
-        }
+        //SEND TOKEN FROM MY ADDRESS TO THIS CONTRACT
+        address tokenAddress = gateway.tokenAddresses(_symbol);
+
+        IERC20(tokenAddress).transferFrom(msg.sender, address(this), _amount);
+        IERC20(tokenAddress).approve(address(gateway), _amount);
+
+        bytes memory encodedBetPayload = abi.encode(currentChoice);
 
         // call contract with token to send gmp message with token
         gasService.payNativeGasForContractCallWithToken{value: msg.value}(
             address(this),
             _destChain,
             _destContractAddr,
-            recipientAddressEncoded,
+            encodedBetPayload,
             _symbol,
             _amount,
             msg.sender
@@ -77,14 +98,29 @@ contract RockPaperScissors {
         gateway.callContractWithToken(
             _destChain,
             _destContractAddr,
-            recipientAddressEncoded,
+            encodedBetPayload,
             _symbol,
             _amount
         );
     }
 
-    function determineWinner() internal {
+    // function determineWinner() internal {
+    function _execute(
+        string calldata,
+        string calldata,
+        bytes calldata _payload
+    ) internal override {
         require(!gameCompleted, "Game is already completed.");
+
+        Choice memory decodedGmpMessage = abi.decode(_payload, (Choice));
+
+        Choice storage currentChoice = (decodedGmpMessage.player == player1)
+            ? choice1
+            : choice2;
+
+        currentChoice.player = msg.sender;
+        currentChoice.move = decodedGmpMessage.move;
+
         if (choice1.move == choice2.move) {
             winner = address(0); // It's a draw
         } else if (

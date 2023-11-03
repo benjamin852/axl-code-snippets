@@ -19,7 +19,7 @@ async function main() {
 
 
     const nftCrosschain = await ethers.deployContract(
-        'InterchainNFT',
+        'RockPaperScissors',
         [gatewayFantom, gasServiceFantom, tokenAddr]
     );
 

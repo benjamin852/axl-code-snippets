@@ -85,7 +85,11 @@ contract InterchainDefi is AxelarExecutable {
         );
     }
 
-    function execute(bytes calldata _payload) external {
+    function _execute(
+        string calldata,
+        string calldata,
+        bytes calldata _payload
+    ) internal override {
         ISwapRouter.ExactInputSingleParams memory decodedGmpMessage = abi
             .decode(_payload, (ISwapRouter.ExactInputSingleParams));
 
