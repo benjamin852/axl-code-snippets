@@ -29,6 +29,7 @@ contract InterchainNFT is AxelarExecutable {
         require(msg.value > 0, "Gas payment required");
 
         //encode recipient addressess tx on destiantion chain
+
         bytes memory mintNftPayload = abi.encodeWithSignature(
             "safeMint(address,uint256)",
             receivingAddr,

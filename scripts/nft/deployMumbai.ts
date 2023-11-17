@@ -17,8 +17,10 @@ async function main() {
 
   const tokenAddr = '0x30341a332C828A0462D03162CC52D6b48b2BFdE4'
 
-  const nftCrosschain = await ethers.deployContract('InterchainNFT',
-    [gatewayMumbai, gasServiceMumbai, tokenAddr]
+  const wagerAmount = 6000000
+
+  const nftCrosschain = await ethers.deployContract('RockPaperScissors',
+    [gatewayMumbai, gasServiceMumbai, wagerAmount]
   );
 
 

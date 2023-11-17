@@ -20,7 +20,7 @@ async function main() {
   const tokenAddr = '0x30341a332C828A0462D03162CC52D6b48b2BFdE4'
 
   const defiCrosschain = await ethers.deployContract('InterchainDefi',
-    [gatewayMumbai, gasServiceMumbai, swapRouterMumbai]
+    [gatewayMumbai, gasServiceMumbai]
   );
 
 

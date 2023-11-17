@@ -17,10 +17,12 @@ async function main() {
 
     const tokenAddr = '0xfF635D5316701a6dbdab4739371B3172862AbdBE' //>>mumbai addr for nft
 
+    const wagerAmount = 6000000
+
 
     const nftCrosschain = await ethers.deployContract(
         'RockPaperScissors',
-        [gatewayFantom, gasServiceFantom, tokenAddr]
+        [gatewayFantom, gasServiceFantom, wagerAmount]
     );
 
     console.log(

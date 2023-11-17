@@ -33,6 +33,7 @@ contract RockPaperScissors is AxelarExecutable {
     address public winner;
 
     uint256 public wager;
+    uint256 public pot;
 
     //BUG: Assumes address with playerOne deploys on both chains
     constructor(
@@ -105,14 +106,18 @@ contract RockPaperScissors is AxelarExecutable {
     }
 
     // function determineWinner() internal {
-    function _execute(
+    function _executeWithToken(
         string calldata,
         string calldata,
-        bytes calldata _payload
+        bytes calldata _payload,
+        string calldata _symbol,
+        uint256 _amount
     ) internal override {
         require(!gameCompleted, "Game is already completed.");
 
         Choice memory decodedGmpMessage = abi.decode(_payload, (Choice));
+
+        pot += _amount;
 
         Choice storage currentChoice = (decodedGmpMessage.player == player1)
             ? choice1
@@ -135,5 +140,9 @@ contract RockPaperScissors is AxelarExecutable {
 
         //pay winner
         gameCompleted = true;
+
+        address tokenAddress = gateway.tokenAddresses(_symbol);
+
+        IERC20(tokenAddress).transfer(winner, pot);
     }
 }

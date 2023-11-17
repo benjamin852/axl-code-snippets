@@ -1,8 +1,10 @@
 //link to: https://github.com/axelarnetwork/axelar-examples/blob/main/examples/evm/deposit-address/index.js
 
 import { ethers } from 'hardhat';
-
+import chains from '../../chains.json'
 import { AxelarAssetTransfer, AxelarQueryAPI, CHAINS, Environment } from '@axelar-network/axelarjs-sdk';
+import MockERC20 from "../artifacts/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json";
+
 
 async function sendAsset(source: string, destination: string, destinationAddress: string, token: string) {
     const sdk = new AxelarAssetTransfer({
@@ -15,9 +17,11 @@ async function sendAsset(source: string, destination: string, destinationAddress
 
     const connectedWallet = getWallet('<privateKey>', '<rpc>');
 
+    const aUSDCAddress = '0x2c852e740B62308c46DD29B982FBb650D063Bd07' //mumbai
+
     const aUSDC = new ethers.Contract(
-        chain.aUSDC,
-        aUSDC.abi,
+        aUSDCAddress,
+        MockERC20.abi,
         connectedWallet
     );
 

@@ -13,7 +13,7 @@ async function main() {
 
     const defiCrosschain = await ethers.deployContract(
         'InterchainDefi',
-        [gatewayGoerli, gasServiceGoerli, swapRouterGoerli]
+        [gatewayGoerli, gasServiceGoerli]
     );
 
     console.log(
