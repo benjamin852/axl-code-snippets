@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -7,83 +7,52 @@ import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contract
 import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
 import {IAxelarGasService} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol";
 
-//interchain bet --> more assets, extra logic to cheaper chains, increase pool of players
-//option 2 all logic on chain A. only send winner to chain B and payout winner there
-contract RockPaperScissors is AxelarExecutable {
-    address public player1;
-    address public player2;
+// fantom
+// 0x97837985Ec0494E7b9C71f5D3f9250188477ae14, 0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6
+// aUSDC: 0x75Cc4fDf1ee3E781C1A3Ee9151D5c6Ce34Cf5C61
+
+// mumbai
+// 0xBF62ef1486468a6bd26Dd669C06db43dEd5B849B, 0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6
+
+//WFTM
+
+contract InterchainGaming is AxelarExecutable {
+    uint256 public lastRoll;
+    uint256 public lastBetAmount;
+    address public lastPlayer;
+    address public lastWinner;
+
+    address[] public uniqueTokens;
 
     IAxelarGasService public immutable gasService;
 
-    enum Move {
-        Rock,
-        Paper,
-        Scissors
-    }
-
-    struct Choice {
-        address player;
-        Move move;
-    }
-
-    Choice public choice1;
-    Choice public choice2;
-
-    bool public gameCompleted;
-    address public winner;
-
-    uint256 public wager;
-    uint256 public pot;
-
-    //BUG: Assumes address with playerOne deploys on both chains
     constructor(
         address _gateway,
-        address _gasService,
-        uint256 _wager
+        address _gasService
     ) AxelarExecutable(_gateway) {
         gasService = IAxelarGasService(_gasService);
-        player1 = msg.sender;
-        wager = _wager;
     }
 
-    function joinGame() public {
-        require(player2 == address(0), "Game is already full.");
-        player2 = msg.sender;
-    }
-
-    function makeChoice(
+    // "Polygon", '', 3, "aUSDC", 100
+    function rollDice(
         string memory _destChain,
         string memory _destContractAddr,
+        uint256 _guess,
         string memory _symbol,
-        uint256 _amount,
-        Move _move
-    ) public payable {
-        require(
-            msg.sender == player1 || msg.sender == player2,
-            "You are not a participant."
-        );
-        require(!gameCompleted, "Game is already completed.");
-        require(wager == _amount, "invalid amount");
+        uint256 _amount
+    ) external payable {
+        require(_guess >= 1 && _guess <= 6, "Guess must be between 1 and 6");
+        require(msg.value > 0, "Insufficient gas");
 
-        Choice memory currentChoice = (msg.sender == player1)
-            ? choice1
-            : choice2;
+        bytes memory encodedBetPayload = abi.encode(msg.sender, _guess);
 
-        require(
-            _move == Move.Rock || _move == Move.Paper || _move == Move.Scissors,
-            "Invalid choice."
-        );
-
-        // currentChoice.player = msg.sender;
-        // currentChoice.move = _move;
-
-        //SEND TOKEN FROM MY ADDRESS TO THIS CONTRACT
         address tokenAddress = gateway.tokenAddresses(_symbol);
 
+        //send funds to this contract
         IERC20(tokenAddress).transferFrom(msg.sender, address(this), _amount);
-        IERC20(tokenAddress).approve(address(gateway), _amount);
 
-        bytes memory encodedBetPayload = abi.encode(currentChoice);
+        //approve gateway to spend funds
+        IERC20(tokenAddress).approve(address(gateway), _amount);
 
         // call contract with token to send gmp message with token
         gasService.payNativeGasForContractCallWithToken{value: msg.value}(
@@ -105,7 +74,6 @@ contract RockPaperScissors is AxelarExecutable {
         );
     }
 
-    // function determineWinner() internal {
     function _executeWithToken(
         string calldata,
         string calldata,
@@ -113,36 +81,55 @@ contract RockPaperScissors is AxelarExecutable {
         string calldata _symbol,
         uint256 _amount
     ) internal override {
-        require(!gameCompleted, "Game is already completed.");
-
-        Choice memory decodedGmpMessage = abi.decode(_payload, (Choice));
-
-        pot += _amount;
-
-        Choice storage currentChoice = (decodedGmpMessage.player == player1)
-            ? choice1
-            : choice2;
-
-        currentChoice.player = msg.sender;
-        currentChoice.move = decodedGmpMessage.move;
-
-        if (choice1.move == choice2.move) {
-            winner = address(0); // It's a draw
-        } else if (
-            (choice1.move == Move.Rock && choice2.move == Move.Scissors) ||
-            (choice1.move == Move.Paper && choice2.move == Move.Rock) ||
-            (choice1.move == Move.Scissors && choice2.move == Move.Paper)
-        ) {
-            winner = choice1.player;
-        } else {
-            winner = choice2.player;
-        }
-
-        //pay winner
-        gameCompleted = true;
+        (address player, uint256 guess) = abi.decode(
+            _payload,
+            (address, uint256)
+        );
 
         address tokenAddress = gateway.tokenAddresses(_symbol);
 
-        IERC20(tokenAddress).transfer(winner, pot);
+        _addUniqueTokenAddress(tokenAddress);
+
+        //get result
+        // uint256 diceResult = (block.timestamp % 6) + 1;
+        uint256 diceResult = 4;
+
+        //check if winner
+        bool won;
+        if (guess == diceResult) {
+            won = true;
+        }
+
+        lastRoll = diceResult;
+        lastBetAmount = _amount;
+        lastPlayer = player;
+
+        if (won) {
+            _payOutAllTokensToWinner(player);
+        }
+    }
+
+    function _addUniqueTokenAddress(address tokenAddress) internal {
+        bool found = false;
+
+        for (uint256 i = 0; i < uniqueTokens.length; i++) {
+            if (uniqueTokens[i] == tokenAddress) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            uniqueTokens.push(tokenAddress);
+        }
+    }
+
+    function _payOutAllTokensToWinner(address _player) internal {
+        lastWinner = _player;
+
+        for (uint256 i = 0; i < uniqueTokens.length; i++) {
+            address token = uniqueTokens[i];
+            uint256 transferAmount = IERC20(token).balanceOf(address(this));
+            IERC20(token).transfer(_player, transferAmount);
+        }
     }
 }

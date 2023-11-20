@@ -35,7 +35,7 @@ contract InterchainDefi is AxelarExecutable {
         gasService = IAxelarGasService(_gasService);
     }
 
-    function swapToken(
+    function interchainSwap(
         string memory _destChain, // Polygon
         string memory _destContractAddr, //address(this)
         string memory _symbol // "WMATIC"
@@ -63,7 +63,7 @@ contract InterchainDefi is AxelarExecutable {
                 tokenOut: wethAddr, //weth mumbai
                 fee: poolFee,
                 recipient: msg.sender,
-                deadline: block.timestamp + 1 days,
+                deadline: block.timestamp + 1 hours,
                 amountIn: amount,
                 amountOutMinimum: 0,
                 sqrtPriceLimitX96: 0

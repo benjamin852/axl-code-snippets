@@ -1,6 +1,5 @@
 // import { Wallet, getDefaultProvider } from "ethers"
 import { ethers } from 'hardhat';
-import { deployContract } from "@axelar-network/axelar-local-dev";
 
 async function main() {
 
