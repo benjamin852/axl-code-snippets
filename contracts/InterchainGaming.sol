@@ -24,7 +24,7 @@ contract InterchainGaming is AxelarExecutable {
         gasService = IAxelarGasService(_gasService);
     }
 
-    function rollDice(
+    function placeBet(
         string memory _destChain,
         string memory _destContractAddr,
         uint256 _guess,
@@ -88,9 +88,7 @@ contract InterchainGaming is AxelarExecutable {
         lastBetAmount = _amount;
         lastPlayer = player;
 
-        if (won) {
-            _payOutAllTokensToWinner(player);
-        }
+        if (won) _payOutAllTokensToWinner(player);
     }
 
     function _addUniqueTokenAddress(address tokenAddress) internal {
@@ -102,9 +100,7 @@ contract InterchainGaming is AxelarExecutable {
                 break;
             }
         }
-        if (!found) {
-            uniqueTokens.push(tokenAddress);
-        }
+        if (!found) uniqueTokens.push(tokenAddress);
     }
 
     function _payOutAllTokensToWinner(address _player) internal {
