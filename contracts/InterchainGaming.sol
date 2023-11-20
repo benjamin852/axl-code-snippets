@@ -7,15 +7,6 @@ import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contract
 import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
 import {IAxelarGasService} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol";
 
-// fantom
-// 0x97837985Ec0494E7b9C71f5D3f9250188477ae14, 0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6
-// aUSDC: 0x75Cc4fDf1ee3E781C1A3Ee9151D5c6Ce34Cf5C61
-
-// mumbai
-// 0xBF62ef1486468a6bd26Dd669C06db43dEd5B849B, 0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6
-
-//WFTM
-
 contract InterchainGaming is AxelarExecutable {
     uint256 public lastRoll;
     uint256 public lastBetAmount;
@@ -33,7 +24,6 @@ contract InterchainGaming is AxelarExecutable {
         gasService = IAxelarGasService(_gasService);
     }
 
-    // "Polygon", '', 3, "aUSDC", 100
     function rollDice(
         string memory _destChain,
         string memory _destContractAddr,
@@ -90,15 +80,9 @@ contract InterchainGaming is AxelarExecutable {
 
         _addUniqueTokenAddress(tokenAddress);
 
-        //get result
-        // uint256 diceResult = (block.timestamp % 6) + 1;
-        uint256 diceResult = 4;
+        uint256 diceResult = (block.timestamp % 6) + 1;
 
-        //check if winner
-        bool won;
-        if (guess == diceResult) {
-            won = true;
-        }
+        bool won = guess == diceResult;
 
         lastRoll = diceResult;
         lastBetAmount = _amount;
