@@ -52,8 +52,6 @@ contract InterchainNFT is AxelarExecutable {
         string calldata,
         bytes calldata _payload
     ) internal override {
-        //safeMint();
-        // string memory mintCall = abi.decode(_payload, (string));
         (bool success, ) = address(nft).call(_payload);
         require(success, "safeMint() call failed");
     }
