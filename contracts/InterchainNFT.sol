@@ -28,8 +28,6 @@ contract InterchainNFT is AxelarExecutable {
     ) external payable {
         require(msg.value > 0, "Gas payment required");
 
-        //encode recipient addressess tx on destiantion chain
-
         bytes memory mintNftPayload = abi.encodeWithSignature(
             "safeMint(address,uint256)",
             receivingAddr,
@@ -56,6 +54,7 @@ contract InterchainNFT is AxelarExecutable {
     ) internal override {
         //safeMint();
         // string memory mintCall = abi.decode(_payload, (string));
-        (bool success, bytes memory data) = address(nft).call(_payload);
+        (bool success, ) = address(nft).call(_payload);
+        require(success, "safeMint() call failed");
     }
 }

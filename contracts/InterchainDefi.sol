@@ -17,7 +17,6 @@ import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 
 //Mumbai -> Goerli
 contract InterchainDefi is AxelarExecutable {
-    address public wethGoerli = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6; //goerli
     address public wmaticGoerli = 0x21ba4f6aEdA155DD77Cc33Fb93646910543F0380; //goerli
 
     address public wethAddr = 0xA6FA4fB5f76172d178d61B04b0ecd319C5d1C0aa; //mumbai
