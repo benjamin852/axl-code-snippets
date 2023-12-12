@@ -21,10 +21,8 @@ async function main() {
         [gatewayGoerli, gasServiceGoerli]
     );
 
-    const wethAddr = '0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6'
     const wmaticAddr = '0x21ba4f6aEdA155DD77Cc33Fb93646910543F0380'
 
-    // const mockERC20 = new ethers.Contract(wethAddr, MockERC20.abi, connectedWallet)
     const mockERC20 = new ethers.Contract(wmaticAddr, MockERC20.abi, connectedWallet)
 
     await mockERC20.approve(defiCrosschain.target, 1e18.toString())

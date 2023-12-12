@@ -15,6 +15,7 @@ import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 
 //https://testnet.axelarscan.io/gmp/0xf5abf4988691381d6b83e07e2cb45b96970fbfef361f327966e786b418492b79:19
 
+//
 // https://testnet.axelarscan.io/gmp/0x851123132fe0797f8523c7187b45d391e4d9b09801ac58ced3d3d16dd8c1efef:81
 
 //Mumbai -> Goerli
@@ -46,17 +47,6 @@ contract InterchainDefi is AxelarExecutable {
         uint24 poolFee = 3000;
 
         uint256 amount = 0.001 ether;
-
-        // Transfer the specified amount of DAI to this contract.
-        // TransferHelper.safeTransferFrom(
-        //     wmaticGoerli,
-        //     msg.sender,
-        //     address(this),
-        //     amount
-        // );
-
-        // Approve the router to spend DAI.
-        // TransferHelper.safeApprove(wmaticGoerli, address(gateway), amount);
 
         IERC20(wmaticGoerli).transferFrom(msg.sender, address(this), amount);
         IERC20(wmaticGoerli).approve(address(gateway), amount);
