@@ -15,6 +15,8 @@ import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 
 //https://testnet.axelarscan.io/gmp/0xf5abf4988691381d6b83e07e2cb45b96970fbfef361f327966e786b418492b79:19
 
+// https://testnet.axelarscan.io/gmp/0x851123132fe0797f8523c7187b45d391e4d9b09801ac58ced3d3d16dd8c1efef:81
+
 //Mumbai -> Goerli
 contract InterchainDefi is AxelarExecutable {
     address public wmaticGoerli = 0x21ba4f6aEdA155DD77Cc33Fb93646910543F0380; //goerli
@@ -46,15 +48,18 @@ contract InterchainDefi is AxelarExecutable {
         uint256 amount = 0.001 ether;
 
         // Transfer the specified amount of DAI to this contract.
-        TransferHelper.safeTransferFrom(
-            wmaticGoerli,
-            msg.sender,
-            address(this),
-            amount
-        );
+        // TransferHelper.safeTransferFrom(
+        //     wmaticGoerli,
+        //     msg.sender,
+        //     address(this),
+        //     amount
+        // );
 
         // Approve the router to spend DAI.
-        TransferHelper.safeApprove(wmaticGoerli, address(gateway), amount);
+        // TransferHelper.safeApprove(wmaticGoerli, address(gateway), amount);
+
+        IERC20(wmaticGoerli).transferFrom(msg.sender, address(this), amount);
+        IERC20(wmaticGoerli).approve(address(gateway), amount);
 
         ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter
             .ExactInputSingleParams({
@@ -62,7 +67,7 @@ contract InterchainDefi is AxelarExecutable {
                 tokenOut: wethAddr, //weth mumbai
                 fee: poolFee,
                 recipient: msg.sender,
-                deadline: block.timestamp + 1 hours,
+                deadline: block.timestamp + 1 days,
                 amountIn: amount,
                 amountOutMinimum: 0,
                 sqrtPriceLimitX96: 0
@@ -105,6 +110,8 @@ contract InterchainDefi is AxelarExecutable {
             address(swapRouter),
             decodedGmpMessage.amountIn
         );
+
+        IERC20(wmaticAddr).approve(address(swapRouter), 1 ether);
 
         swapRouter.exactInputSingle(decodedGmpMessage);
     }
